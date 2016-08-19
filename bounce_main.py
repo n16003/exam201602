@@ -2,8 +2,9 @@ from tkinter import *
 import random
 import time
 
+#色とサイズ
 WIDTH = 500
-HEIGHT=500
+HEIGHT= 600
 COLOR  = ('red', 'blue', 'green', 'yellow')
 BLOCK_W = 8
 BLOCK_H = 5
@@ -59,14 +60,17 @@ class Ball:
                 return True
 
         return False
+
 #paddleの下に当たっても跳ね返るように
     def hit_paddle2(self,pos):
         paddle_pos = self.canvas.coords(self.paddle.id)
         if pos[2] >= paddle_pos[0] and pos[0] <= paddle_pos[2]:
             if pos[1] <= paddle_pos[3] and pos[3] >= paddle_pos[3]:
                 return True
-#ブロック
+
+#ブロックの当たり判定
     def hit_block(self, pos):
+        target_block = 0
         collision_type = 0
         for block in self.blocks:
             block_pos = self.canvas.coords(block.id)
@@ -76,43 +80,33 @@ class Ball:
                 collision_type |= 3
 
             # top check
-            if pos[2] >= block_pos[0] and pos[0] <= block_pos[2] and \
-                pos[3] >= block_pos[1] and pos[3] < block_pos[3]:
+            if pos[2] >= block_pos[0] and pos[0] <= block_pos[2] \
+                and pos[3] >= block_pos[1] and pos[3] < block_pos[3]:
 
-                 collision_type |= 1
+                collision_type |= 1
 
             # bottom check
-            if pos[2] >= block_pos[0] and pos[0] <= block_pos[2] and \
-                pos[1] > block_pos[1] and pos[1] <= block_pos[3]:
+            if pos[2] >= block_pos[0] and pos[0] <= block_pos[2] \
+                and pos[1] > block_pos[1] and pos[1] <= block_pos[3]:
 
                 collision_type |= 1
 
             # left check
-            if pos[3] >= block_pos[1] and pos[1] <= block_pos[3] and \
-                pos[2] >= block_pos[0] and pos[2] < block_pos[2]:
+            if pos[3] >= block_pos[1] and pos[1] <= block_pos[3] \
+                and pos[2] >= block_pos[0] and pos[2] < block_pos[2]:
 
                 collision_type |= 2
 
             # right check
-            if pos[3] >= block_pos[1] and pos[1] <= block_pos[3] and \
-                  pos[0] > block_pos[0] and pos[0] <= block_pos[2]:
+            if pos[3] >= block_pos[1] and pos[1] <= block_pos[3] \
+                  and pos[0] > block_pos[0] and pos[0] <= block_pos[2]:
 
                 collision_type |= 2
 
-        if collision_type != 0:
-            return(blocks, collision_type)
-        return (None,None)
+            if collision_type != 0:
+                return(block, collision_type)
 
-        (target, collision_type) = self.hit_block(pos)
-        if target != None:
-            target.delete()
-            del self.blocks[self.blocks.index(target)]
-
-        if (collision_type & 1) != 0:
-            self.y *= -1
-
-        if (collision_type & 2) != 0:
-            self.x *= -1
+        return (None, 0)
 
     def draw(self):
         self.canvas.move(self.id, self.x, self.y)
@@ -136,11 +130,20 @@ class Ball:
         if self.hit_paddle2(pos):
             self.y = abs(self.x)
 
+        (target, collision_type) = self.hit_block(pos)
+        if target != None:
+            target.delete()
+            del self.blocks[self.blocks.index(target)]
+
+            if (collision_type & 1) != 0:
+                self.y *= -1
+
+
 class Paddle:
     def __init__(self, canvas, color):
         self.canvas = canvas
         self.id = canvas.create_rectangle(0, 0, 100, 10, fill=color)
-        self.canvas.move(self.id, 220, 300)
+        self.canvas.move(self.id, 220, 400)
         self.x = 0
         self.canvas_width = self.canvas.winfo_width()
         self.canvas.bind_all('<KeyPress-Left>', self.turn_left)
@@ -181,7 +184,10 @@ c = Canvas(tk,width = WIDTH,height = HEIGHT, bd=0, highlightthickness=0)
 c.pack()
 tk.update()
 
+image1 = PhotoImage(file = 'new_hikakin.gif')
 
+hoge = c.create_image(0, 0, image = image1)
+c.move(hoge, 170, 200)
 
 #ブロック生成
 blocks=[]
@@ -190,8 +196,8 @@ for y in range(BLOCK_H):
         blocks.append(Block(c, x, y, random.choice(COLOR)))
 
 p = Paddle(c, 'navy')
-ball = Ball(c, p, blocks, 'grey')
-game_over_text = c.create_text(250,300, text ='GAME OVER', state = 'hidden',font =('Courier',30))
+ball = Ball(c, p, blocks, 'pink')
+game_over_text = c.create_text(250,200,  text ='GAME OVER', state = 'hidden',font =('Courier',40))
 
 def update():
     if not ball.hit_bottom:

@@ -49,12 +49,11 @@ class Ball:
         self.canvas_width = self.canvas.winfo_width()
         self.hit_bottom = False
         self.canvas.bind_all('<KeyPress-Return>',self.start)
-
 #キースタート（ENTERを押すと初期位置に戻るチート機能付き）
     def start(self,event):
         self.x = random.choice((-3,-2,-1,1,2,3))
         self.y = -3
-
+        c.itemconfig(game_start_text, state = 'hidden')
     def hit_paddle(self, pos):
         paddle_pos = self.canvas.coords(self.paddle.id)
         if pos[2] >= paddle_pos[0] and pos[0] <= paddle_pos[2]:
@@ -263,20 +262,28 @@ for y in range(BLOCK_H):
 p = Paddle(c, 'green')
 ball = Ball(c, p, blocks, u_blocks, 'black')
 
-game_over_text = c.create_text(250,200,  text ='GAME OVER', state = 'hidden',font =('Courier',40))
+game_over_text = c.create_text(250,200,  text ='GAME OVER', state = 'hidden',font =('Courier', 40))
+game_start_text = c.create_text(250, 200, text ='Please push enter', state = 'hidden', font =('Courier', 20))
+c.itemconfig(game_start_text, state='normal')
+
 
 def update():
     if not ball.hit_bottom:
         ball.draw()
         p.draw()
+
     if ball.hit_bottom == True:
         time.sleep(1)
-        c.itemconfig(game_over_text, state='normal')
+        c.itemconfig(game_start_text, state = 'hidden')
+        c.itemconfig(game_over_text, state = 'normal')
+
+
 
 
     tk.update_idletasks()
     tk.update()
     tk.after(10, update)
+
 
 tk.after(10, update)
 tk.mainloop()

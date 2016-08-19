@@ -8,6 +8,7 @@ HEIGHT= 600
 COLOR  = ('red', 'blue', 'green', 'yellow')
 BLOCK_W = 8
 BLOCK_H = 5
+U_BLOCK_W = 4
 
 #衝突判定
 def point_collision(a , b):
@@ -35,10 +36,11 @@ def point_collision(a , b):
 
 
 class Ball:
-    def __init__(self, canvas, paddle, blocks, color):
+    def __init__(self, canvas, paddle, blocks,u_blocks, color):
         self.canvas = canvas
         self.paddle = paddle
         self.blocks  = blocks
+        self.u_blocks = u_blocks
         self.id = canvas.create_oval(10, 10, 25, 25, fill=color)
         self.canvas.move(self.id, 245, 200)
         self.x =  0
@@ -108,6 +110,45 @@ class Ball:
 
         return (None, 0)
 
+    def hit_u_block(self, pos):
+        target_block = 0
+        collision_type = 0
+        for block in self.u_blocks:
+            block_pos = self.canvas.coords(block.id)
+
+            # circle_collision check
+            if point_collision(block_pos, pos):
+                collision_type |= 3
+
+            # top check
+            if pos[2] >= block_pos[0] and pos[0] <= block_pos[2] \
+                    and pos[3] >= block_pos[1] and pos[3] < block_pos[3]:
+
+                collision_type |= 1
+
+            # bottom check
+            if pos[2] >= block_pos[0] and pos[0] <= block_pos[2] \
+                    and pos[1] > block_pos[1] and pos[1] <= block_pos[3]:
+
+                collision_type |= 1
+
+            # left check
+            if pos[3] >= block_pos[1] and pos[1] <= block_pos[3] \
+                    and pos[2] >= block_pos[0] and pos[2] < block_pos[2]:
+
+                collision_type |= 2
+
+            # right check
+            if pos[3] >= block_pos[1] and pos[1] <= block_pos[3] \
+                    and pos[0] > block_pos[0] and pos[0] <= block_pos[2]:
+
+                collision_type |= 2
+
+            if collision_type != 0:
+                return (block, collision_type)
+
+        return (None, 0)
+
     def draw(self):
         self.canvas.move(self.id, self.x, self.y)
         pos = self.canvas.coords(self.id)
@@ -138,12 +179,20 @@ class Ball:
             if (collision_type & 1) != 0:
                 self.y *= -1
 
+        (target, collision_type) = self.hit_u_block(pos)
+        if target != None:
+            target.delete()
+            del self.u_blocks[self.u_blocks.index(target)]
+
+            if (collision_type & 1) != 0:
+                self.y *= -1
+
 
 class Paddle:
     def __init__(self, canvas, color):
         self.canvas = canvas
         self.id = canvas.create_rectangle(0, 0, 100, 10, fill=color)
-        self.canvas.move(self.id, 220, 400)
+        self.canvas.move(self.id, 220, 300)
         self.x = 0
         self.canvas_width = self.canvas.winfo_width()
         self.canvas.bind_all('<KeyPress-Left>', self.turn_left)
@@ -175,6 +224,17 @@ class Block:
     def delete(self):
         self.canvas.delete(self.id)
 
+class Under_Block:
+    def __init__(self, canvas, x, y, color):
+        self.canvas = canvas
+        self.pos_x = x
+        self.pos_y = y
+        self.id = canvas.create_rectangle(0, 0, 50, 20, fill=color)
+        self.canvas.move(self.id, self.pos_x * 50 + 150, self.pos_y * 20 + 450)
+
+    def delete(self):
+        self.canvas.delete(self.id)
+
 
 tk = Tk()
 tk.title("Game")
@@ -195,8 +255,14 @@ for y in range(BLOCK_H):
     for x in range(BLOCK_W):
         blocks.append(Block(c, x, y, random.choice(COLOR)))
 
-p = Paddle(c, 'navy')
-ball = Ball(c, p, blocks, 'pink')
+u_blocks = []
+for y in range(BLOCK_H):
+    for x in range(U_BLOCK_W):
+        u_blocks.append(Under_Block(c, x, y, random.choice(COLOR)))
+
+p = Paddle(c, 'green')
+ball = Ball(c, p, blocks, u_blocks, 'black')
+
 game_over_text = c.create_text(250,200,  text ='GAME OVER', state = 'hidden',font =('Courier',40))
 
 def update():
